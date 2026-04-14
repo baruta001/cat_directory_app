@@ -29,7 +29,7 @@ class _CatDirectoryAppState extends State<CatDirectoryApp> {
   @override
   Widget build(BuildContext context) {
     // Definición de colores
-    const Color beigeColor = Color(0xFFEEDDAA); // Beige suave
+    const Color beigeColor = Color(0xFFC8AE81); // Beige suave
     const Color greyColor = Color(0xFF9E9E9E); // Gris secundario (Claro)
     const Color creamyWhite = Color(0xFFFDFBF7); // Blanco crema (Oscuro)
 
@@ -87,9 +87,19 @@ class CatBreedsScreen extends StatefulWidget {
 class _CatBreedsScreenState extends State<CatBreedsScreen> {
   final List<dynamic> _breeds = [];
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
   int _currentPage = 1;
   bool _isLoading = false;
   bool _hasMore = true;
+
+  List<dynamic> get _filteredBreeds {
+    if (_searchQuery.isEmpty) return _breeds;
+    return _breeds.where((breed) {
+      final String breedName = breed['breed'] ?? '';
+      return breedName.toLowerCase().contains(_searchQuery.toLowerCase());
+    }).toList();
+  }
 
   @override
   void initState() {
@@ -101,12 +111,14 @@ class _CatBreedsScreenState extends State<CatBreedsScreen> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
   void _onScroll() {
     if (_scrollController.position.pixels ==
-        _scrollController.position.maxScrollExtent) {
+            _scrollController.position.maxScrollExtent &&
+        _searchQuery.isEmpty) {
       _fetchBreeds();
     }
   }
@@ -178,144 +190,206 @@ class _CatBreedsScreenState extends State<CatBreedsScreen> {
           ),
         ],
       ),
-      body: _breeds.isEmpty && _isLoading
-          ? Center(
-              child: CircularProgressIndicator(
-                color: theme.colorScheme.primary,
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 12.0,
+              vertical: 8.0,
+            ),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Buscar por raza...',
+                prefixIcon: Icon(
+                  Icons.search,
+                  color: theme.colorScheme.secondary,
+                ),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() {
+                            _searchQuery = '';
+                          });
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor: theme.colorScheme.surface,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16.0),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 14.0),
               ),
-            )
-          : RefreshIndicator(
-              color: theme.colorScheme.primary,
-              onRefresh: () async {
+              onChanged: (value) {
                 setState(() {
-                  _currentPage = 1;
-                  _breeds.clear();
-                  _hasMore = true;
+                  _searchQuery = value;
                 });
-                await _fetchBreeds();
               },
-              child: ListView.builder(
-                controller: _scrollController,
-                physics: const AlwaysScrollableScrollPhysics(),
-                itemCount: _breeds.length + (_hasMore ? 1 : 0),
-                itemBuilder: (context, index) {
-                  if (index == _breeds.length) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 20.0),
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          color: theme.colorScheme.primary,
-                        ),
+            ),
+          ),
+          Expanded(
+            child: _breeds.isEmpty && _isLoading
+                ? Center(
+                    child: CircularProgressIndicator(
+                      color: theme.colorScheme.primary,
+                    ),
+                  )
+                : _filteredBreeds.isEmpty && _searchQuery.isNotEmpty
+                ? Center(
+                    child: Text(
+                      'No se encontraron razas',
+                      style: TextStyle(
+                        color: theme.colorScheme.secondary,
+                        fontSize: 16,
                       ),
-                    );
-                  }
-
-                  final breed = _breeds[index];
-                  final String breedName = breed['breed'] ?? 'Desconocida';
-                  final String heroTag = 'cat_avatar_$breedName';
-
-                  return Card(
-                    margin: const EdgeInsets.symmetric(
-                      horizontal: 12.0,
-                      vertical: 6.0,
                     ),
-                    elevation: 1,
-                    color: theme.colorScheme.surface,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(16),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          PageRouteBuilder(
-                            transitionDuration: const Duration(
-                              milliseconds: 600,
+                  )
+                : RefreshIndicator(
+                    color: theme.colorScheme.primary,
+                    onRefresh: () async {
+                      setState(() {
+                        _searchController.clear();
+                        _searchQuery = '';
+                        _currentPage = 1;
+                        _breeds.clear();
+                        _hasMore = true;
+                      });
+                      await _fetchBreeds();
+                    },
+                    child: ListView.builder(
+                      controller: _scrollController,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      itemCount:
+                          _filteredBreeds.length +
+                          (_hasMore && _searchQuery.isEmpty ? 1 : 0),
+                      itemBuilder: (context, index) {
+                        if (index == _filteredBreeds.length) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 20.0),
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                color: theme.colorScheme.primary,
+                              ),
                             ),
-                            pageBuilder:
-                                (context, animation, secondaryAnimation) {
-                                  return FadeTransition(
-                                    opacity: animation,
-                                    child: CatBreedDetailsScreen(
-                                      breed: breed,
-                                      heroTag: heroTag,
+                          );
+                        }
+
+                        final breed = _filteredBreeds[index];
+                        final String breedName =
+                            breed['breed'] ?? 'Desconocida';
+                        final String heroTag = 'cat_avatar_$breedName';
+
+                        return Card(
+                          margin: const EdgeInsets.symmetric(
+                            horizontal: 12.0,
+                            vertical: 6.0,
+                          ),
+                          elevation: 1,
+                          color: theme.colorScheme.surface,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(16),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                PageRouteBuilder(
+                                  transitionDuration: const Duration(
+                                    milliseconds: 600,
+                                  ),
+                                  pageBuilder:
+                                      (context, animation, secondaryAnimation) {
+                                        return FadeTransition(
+                                          opacity: animation,
+                                          child: CatBreedDetailsScreen(
+                                            breed: breed,
+                                            heroTag: heroTag,
+                                          ),
+                                        );
+                                      },
+                                ),
+                              );
+                            },
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16.0,
+                                vertical: 10.0,
+                              ),
+                              leading: Hero(
+                                tag: heroTag,
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: CircleAvatar(
+                                    backgroundColor: theme.colorScheme.primary,
+                                    radius: 26,
+                                    child: Icon(
+                                      Icons.pets,
+                                      color: theme.brightness == Brightness.dark
+                                          ? Colors.black87
+                                          : theme.colorScheme.onPrimary,
                                     ),
-                                  );
-                                },
-                          ),
-                        );
-                      },
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16.0,
-                          vertical: 10.0,
-                        ),
-                        leading: Hero(
-                          tag: heroTag,
-                          child: Material(
-                            color: Colors.transparent,
-                            child: CircleAvatar(
-                              backgroundColor: theme.colorScheme.primary,
-                              radius: 26,
-                              child: Icon(
-                                Icons.pets,
-                                color: theme.brightness == Brightness.dark
-                                    ? Colors.black87
-                                    : theme.colorScheme.secondary,
-                              ),
-                            ),
-                          ),
-                        ),
-                        title: Hero(
-                          tag: 'cat_title_$breedName',
-                          child: Material(
-                            color: Colors.transparent,
-                            child: Text(
-                              breedName,
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: theme.textTheme.bodyLarge?.color,
-                              ),
-                            ),
-                          ),
-                        ),
-                        subtitle: Padding(
-                          padding: const EdgeInsets.only(top: 4.0),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.location_on,
-                                size: 16,
-                                color: theme.colorScheme.secondary,
-                              ),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  breed['country']?.isEmpty ?? true
-                                      ? 'Desconocido'
-                                      : breed['country'],
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: theme.colorScheme.secondary,
                                   ),
                                 ),
                               ),
-                            ],
+                              title: Hero(
+                                tag: 'cat_title_$breedName',
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: Text(
+                                    breedName,
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: theme.textTheme.bodyLarge?.color,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              subtitle: Padding(
+                                padding: const EdgeInsets.only(top: 4.0),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.location_on,
+                                      size: 16,
+                                      color: theme.colorScheme.secondary,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        breed['country']?.isEmpty ?? true
+                                            ? 'Desconocido'
+                                            : breed['country'],
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: theme.colorScheme.secondary,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              trailing: Icon(
+                                Icons.arrow_forward_ios,
+                                size: 16,
+                                color: theme.colorScheme.secondary.withOpacity(
+                                  0.5,
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
-                        trailing: Icon(
-                          Icons.arrow_forward_ios,
-                          size: 16,
-                          color: theme.colorScheme.secondary.withOpacity(0.5),
-                        ),
-                      ),
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
-            ),
+                  ),
+          ),
+        ],
+      ),
     );
   }
 }
