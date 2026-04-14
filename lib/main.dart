@@ -1,13 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'detalle_gato.dart';
 
 void main() {
   runApp(const CatDirectoryApp());
 }
 
-class CatDirectoryApp extends StatelessWidget {
+class CatDirectoryApp extends StatefulWidget {
   const CatDirectoryApp({super.key});
+
+  static _CatDirectoryAppState of(BuildContext context) =>
+      context.findAncestorStateOfType<_CatDirectoryAppState>()!;
+
+  @override
+  State<CatDirectoryApp> createState() => _CatDirectoryAppState();
+}
+
+class _CatDirectoryAppState extends State<CatDirectoryApp> {
+  ThemeMode _themeMode = ThemeMode.system;
+
+  void toggleTheme(bool isDark) {
+    setState(() {
+      _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +35,7 @@ class CatDirectoryApp extends StatelessWidget {
 
     return MaterialApp(
       title: 'Directorio de Gatos',
-      themeMode: ThemeMode.system, // Cambia automáticamente según el sistema
+      themeMode: _themeMode, // Cambia dinámicamente
       // Tema Claro
       theme: ThemeData(
         brightness: Brightness.light,
@@ -143,14 +160,23 @@ class _CatBreedsScreenState extends State<CatBreedsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Razas de Gatos',
+          'Directorio de Gatos',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
+            onPressed: () {
+              CatDirectoryApp.of(context).toggleTheme(!isDark);
+            },
+          ),
+        ],
       ),
       body: _breeds.isEmpty && _isLoading
           ? Center(
@@ -290,185 +316,6 @@ class _CatBreedsScreenState extends State<CatBreedsScreen> {
                 },
               ),
             ),
-    );
-  }
-}
-
-class CatBreedDetailsScreen extends StatelessWidget {
-  final Map<String, dynamic> breed;
-  final String heroTag;
-
-  const CatBreedDetailsScreen({
-    super.key,
-    required this.breed,
-    required this.heroTag,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final String breedName = breed['breed'] ?? 'Desconocida';
-
-    return Scaffold(
-      appBar: AppBar(title: const Text('Detalles de la Raza')),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Container(
-              height: 250,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surface,
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(40),
-                  bottomRight: Radius.circular(40),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Hero(
-                    tag: heroTag,
-                    child: Material(
-                      color: Colors.transparent,
-                      child: CircleAvatar(
-                        backgroundColor: theme.colorScheme.primary,
-                        radius: 60,
-                        child: Icon(
-                          Icons.pets,
-                          size: 60,
-                          color: isDark
-                              ? Colors.black87
-                              : theme.colorScheme.secondary,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Hero(
-                    tag: 'cat_title_$breedName',
-                    child: Material(
-                      color: Colors.transparent,
-                      child: Text(
-                        breedName,
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: theme.textTheme.titleLarge?.color,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 30),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Información General',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildInfoRow(
-                    context,
-                    Icons.location_on,
-                    'País de Origen:',
-                    breed['country'],
-                  ),
-                  _buildInfoRow(
-                    context,
-                    Icons.history,
-                    'Origen:',
-                    breed['origin'],
-                  ),
-                  _buildInfoRow(
-                    context,
-                    Icons.inventory_2,
-                    'Pelaje (Coat):',
-                    breed['coat'],
-                  ),
-                  _buildInfoRow(
-                    context,
-                    Icons.palette,
-                    'Patrón:',
-                    breed['pattern'],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(
-    BuildContext context,
-    IconData icon,
-    String label,
-    String? value,
-  ) {
-    final theme = Theme.of(context);
-    final displayValue = (value == null || value.isEmpty)
-        ? 'No disponible'
-        : value;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: theme.colorScheme.secondary, size: 24),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  displayValue,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: theme.textTheme.bodyLarge?.color,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
