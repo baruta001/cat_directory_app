@@ -26,7 +26,11 @@ class CatFactCubit extends Cubit<CatFactState> {
       final fact = await _repository.getRandomFact();
       emit(CatFactState.loaded(fact));
     } catch (e) {
-      emit(CatFactState.error(e.toString()));
+      String userMessage = 'Error al obtener el dato curioso.';
+      if (e.toString().contains('SocketException') || e.toString().contains('Failed host lookup')) {
+        userMessage = 'No tienes acceso a internet.';
+      }
+      emit(CatFactState.error(userMessage));
     }
   }
 }

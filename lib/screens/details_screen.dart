@@ -153,10 +153,24 @@ class _DetailsView extends StatelessWidget {
                             ),
                             textAlign: TextAlign.center,
                           ),
-                          error: (message) => Text(
-                            message,
-                            style: TextStyle(color: theme.colorScheme.error),
-                            textAlign: TextAlign.center,
+                          error: (message) => Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                message,
+                                style: TextStyle(color: theme.colorScheme.error, fontWeight: FontWeight.bold),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 12),
+                              TextButton.icon(
+                                onPressed: () => context.read<CatFactCubit>().fetchRandomFact(),
+                                icon: const Icon(Icons.refresh),
+                                label: const Text('Reintentar'),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: theme.colorScheme.primary,
+                                ),
+                              ),
+                            ],
                           ),
                         );
                       },
