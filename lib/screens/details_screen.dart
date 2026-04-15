@@ -1,66 +1,42 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../models/cat_breed.dart';
+import '../blocs/cat_fact_cubit.dart';
+import '../repositories/cat_repository.dart';
 
-class CatBreedDetailsScreen extends StatefulWidget {
-  final Map<String, dynamic> breed;
+class DetailsScreen extends StatelessWidget {
+  final CatBreed breed;
   final String heroTag;
 
-  const CatBreedDetailsScreen({
+  const DetailsScreen({
     super.key,
     required this.breed,
     required this.heroTag,
   });
 
   @override
-  State<CatBreedDetailsScreen> createState() => _CatBreedDetailsScreenState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => CatFactCubit(context.read<CatRepository>())..fetchRandomFact(),
+      child: _DetailsView(breed: breed, heroTag: heroTag),
+    );
+  }
 }
 
-class _CatBreedDetailsScreenState extends State<CatBreedDetailsScreen> {
-  String? _catFact;
-  bool _isLoadingFact = true;
+class _DetailsView extends StatelessWidget {
+  final CatBreed breed;
+  final String heroTag;
 
-  @override
-  void initState() {
-    super.initState();
-    _fetchRandomFact();
-  }
-
-  Future<void> _fetchRandomFact() async {
-    final url = Uri.parse('https://catfact.ninja/fact');
-    try {
-      final response = await http.get(url);
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> data = json.decode(response.body);
-        if (mounted) {
-          setState(() {
-            _catFact = data['fact'];
-            _isLoadingFact = false;
-          });
-        }
-      } else {
-        if (mounted) {
-          setState(() {
-            _catFact = 'Error al cargar el dato curioso.';
-            _isLoadingFact = false;
-          });
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _catFact = 'Error de conexión.';
-          _isLoadingFact = false;
-        });
-      }
-    }
-  }
+  const _DetailsView({
+    required this.breed,
+    required this.heroTag,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final String breedName = widget.breed['breed'] ?? 'Desconocida';
+    final String breedName = breed.breed;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Detalles de la Raza')),
@@ -89,7 +65,7 @@ class _CatBreedDetailsScreenState extends State<CatBreedDetailsScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Hero(
-                    tag: widget.heroTag,
+                    tag: heroTag,
                     child: Material(
                       color: Colors.transparent,
                       child: CircleAvatar(
@@ -98,9 +74,7 @@ class _CatBreedDetailsScreenState extends State<CatBreedDetailsScreen> {
                         child: Icon(
                           Icons.pets,
                           size: 60,
-                          color: isDark
-                              ? Colors.black87
-                              : theme.colorScheme.secondary,
+                          color: isDark ? Colors.black87 : theme.colorScheme.secondary,
                         ),
                       ),
                     ),
@@ -138,30 +112,10 @@ class _CatBreedDetailsScreenState extends State<CatBreedDetailsScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _buildInfoRow(
-                    context,
-                    Icons.location_on,
-                    'País de Origen:',
-                    widget.breed['country'],
-                  ),
-                  _buildInfoRow(
-                    context,
-                    Icons.history,
-                    'Origen:',
-                    widget.breed['origin'],
-                  ),
-                  _buildInfoRow(
-                    context,
-                    Icons.inventory_2,
-                    'Pelaje (Coat):',
-                    widget.breed['coat'],
-                  ),
-                  _buildInfoRow(
-                    context,
-                    Icons.palette,
-                    'Patrón:',
-                    widget.breed['pattern'],
-                  ),
+                  _buildInfoRow(context, Icons.location_on, 'País de Origen:', breed.country),
+                  _buildInfoRow(context, Icons.history, 'Origen:', breed.origin),
+                  _buildInfoRow(context, Icons.inventory_2, 'Pelaje (Coat):', breed.coat),
+                  _buildInfoRow(context, Icons.palette, 'Patrón:', breed.pattern),
                   const SizedBox(height: 30),
                   Text(
                     'Dato Curioso Aleatorio',
@@ -182,14 +136,15 @@ class _CatBreedDetailsScreenState extends State<CatBreedDetailsScreen> {
                         color: theme.colorScheme.primary.withOpacity(0.3),
                       ),
                     ),
-                    child: _isLoadingFact
-                        ? Center(
-                            child: CircularProgressIndicator(
-                              color: theme.colorScheme.primary,
-                            ),
-                          )
-                        : Text(
-                            _catFact ?? 'Dato curioso no disponible',
+                    child: BlocBuilder<CatFactCubit, CatFactState>(
+                      builder: (context, state) {
+                        return state.when(
+                          initial: () => const SizedBox.shrink(),
+                          loading: () => Center(
+                            child: CircularProgressIndicator(color: theme.colorScheme.primary),
+                          ),
+                          loaded: (fact) => Text(
+                            fact,
                             style: TextStyle(
                               fontSize: 16,
                               fontStyle: FontStyle.italic,
@@ -198,6 +153,14 @@ class _CatBreedDetailsScreenState extends State<CatBreedDetailsScreen> {
                             ),
                             textAlign: TextAlign.center,
                           ),
+                          error: (message) => Text(
+                            message,
+                            style: TextStyle(color: theme.colorScheme.error),
+                            textAlign: TextAlign.center,
+                          ),
+                        );
+                      },
+                    ),
                   ),
                   const SizedBox(height: 40),
                 ],
@@ -216,9 +179,7 @@ class _CatBreedDetailsScreenState extends State<CatBreedDetailsScreen> {
     String? value,
   ) {
     final theme = Theme.of(context);
-    final displayValue = (value == null || value.isEmpty)
-        ? 'No disponible'
-        : value;
+    final displayValue = (value == null || value.isEmpty) ? 'No disponible' : value;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
