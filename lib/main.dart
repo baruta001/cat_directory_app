@@ -42,7 +42,7 @@ class _CatDirectoryAppState extends State<CatDirectoryApp> {
             brightness: Brightness.light,
             colorScheme: const ColorScheme.light(
               primary: AppColors.beigeColor,
-              secondary: AppColors.greyColor,
+              secondary: AppColors.beigeColor,
               surface: AppColors.lightSurface,
               onPrimary: AppColors.lightOnPrimary,
             ),
@@ -59,13 +59,13 @@ class _CatDirectoryAppState extends State<CatDirectoryApp> {
             brightness: Brightness.dark,
             colorScheme: const ColorScheme.dark(
               primary: AppColors.beigeColor,
-              secondary: AppColors.creamyWhite,
+              secondary: AppColors.greyColor,
               surface: AppColors.darkSurface,
               onPrimary: AppColors.darkOnPrimary,
             ),
             appBarTheme: const AppBarTheme(
               backgroundColor: AppColors.darkSurface,
-              foregroundColor: AppColors.creamyWhite,
+              foregroundColor: AppColors.beigeColor,
               elevation: 0,
             ),
             scaffoldBackgroundColor: AppColors.darkScaffold,
