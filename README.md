@@ -1,15 +1,15 @@
-# Directorio de Gatos 🐱
+# Directorio de Gatos
 
 Una aplicación Flutter moderna y elegante para explorar razas de gatos, construida con foco en el rendimiento, la estética premium y la robustez.
 
-## ✨ Características
-- 🐾 **Paginación Infinita**: Carga dinámica de 10 razas a la vez.
-- 🔍 **Búsqueda en Tiempo Real**: Filtra razas localmente de forma instantánea.
-- 🌓 **Modo Oscuro/Claro**: Soporte completo de temas con persistencia visual.
-- 📡 **Manejo de Errores**: Tratamiento elegante de desconexiones con opción de reintento.
-- 🏗️ **Arquitectura Robusta**: Código limpio y escalable.
+## Características
+- **Paginación Infinita**: Carga dinámica de 10 razas a la vez.
+- **Búsqueda en Tiempo Real**: Filtra razas localmente de forma instantánea.
+- **Modo Oscuro/Claro**: Soporte completo de temas con persistencia visual.
+- **Manejo de Errores**: Tratamiento elegante de desconexiones con opción de reintento.
+- **Arquitectura Robusta**: Código limpio y escalable.
 
-## 🚀 Instrucciones de Ejecución
+## Instrucciones de Ejecución
 
 Para ejecutar este proyecto en tu entorno local, sigue estos pasos:
 
@@ -35,7 +35,7 @@ Para ejecutar este proyecto en tu entorno local, sigue estos pasos:
 
 ---
 
-## 🏗️ Arquitectura y Gestión de Estados
+## Arquitectura y Gestión de Estados
 
 ### Arquitectura: Capas Basada en Funcionalidad
 El proyecto sigue una estructura de capas que separa claramente las responsabilidades:
@@ -52,8 +52,15 @@ Se ha seleccionado **Cubit** (una versión simplificada de BLoC) como el motor d
 
 ---
 
-## 📦 Releases Automáticos
+## Releases Automáticos
 El proyecto está configurado con **GitHub Actions**. Para generar un nuevo Release con el APK compilado automáticamente en GitHub:
 1. Crea una etiqueta: `git tag v1.0.0`
 2. Sube la etiqueta: `git push origin v1.0.0`
 3. El APK aparecerá en la sección de "Releases" de tu repositorio en unos minutos.
+
+
+## En lo Personal
+
+Honestamente tras la culminación de esta fase evaluativa, he consolidado una mejora significativa en la arquitectura de mi proyecto sobre la Liga FUTVE. Si bien inicialmente implementé la funcionalidad de Infinite Scroll de manera convencional, he validado que la integración del patrón BLoC (Business Logic Component) optimiza drásticamente la reactividad y la escalabilidad del sistema.
+
+Asimismo, superé la curva de aprendizaje asociada a Freezed, logrando implementar modelos inmutables y una gestión de estados más robusta bajo presión. Esta evaluación marca un punto de inflexión en mi perfil profesional: he pasado de una comprensión asistida a una aplicación autónoma y técnica, quiero seguir aprendiendo y mejorando cada día.
