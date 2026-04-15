@@ -3,21 +3,19 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../models/cat_breed.dart';
 import '../blocs/cat_fact_cubit.dart';
 import '../repositories/cat_repository.dart';
+import '../main.dart';
 
 class DetailsScreen extends StatelessWidget {
   final CatBreed breed;
   final String heroTag;
 
-  const DetailsScreen({
-    super.key,
-    required this.breed,
-    required this.heroTag,
-  });
+  const DetailsScreen({super.key, required this.breed, required this.heroTag});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => CatFactCubit(context.read<CatRepository>())..fetchRandomFact(),
+      create: (context) =>
+          CatFactCubit(context.read<CatRepository>())..fetchRandomFact(),
       child: _DetailsView(breed: breed, heroTag: heroTag),
     );
   }
@@ -27,10 +25,7 @@ class _DetailsView extends StatelessWidget {
   final CatBreed breed;
   final String heroTag;
 
-  const _DetailsView({
-    required this.breed,
-    required this.heroTag,
-  });
+  const _DetailsView({required this.breed, required this.heroTag});
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +34,19 @@ class _DetailsView extends StatelessWidget {
     final String breedName = breed.breed;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Detalles de la Raza')),
+      appBar: AppBar(
+        title: const Text(
+          'Detalles de la Raza',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
+            onPressed: () => CatDirectoryApp.of(context).toggleTheme(!isDark),
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         child: Column(
@@ -74,7 +81,9 @@ class _DetailsView extends StatelessWidget {
                         child: Icon(
                           Icons.pets,
                           size: 60,
-                          color: isDark ? Colors.black87 : theme.colorScheme.secondary,
+                          color: isDark
+                              ? Colors.black87
+                              : theme.colorScheme.onPrimary,
                         ),
                       ),
                     ),
@@ -112,10 +121,30 @@ class _DetailsView extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _buildInfoRow(context, Icons.location_on, 'País de Origen:', breed.country),
-                  _buildInfoRow(context, Icons.history, 'Origen:', breed.origin),
-                  _buildInfoRow(context, Icons.inventory_2, 'Pelaje (Coat):', breed.coat),
-                  _buildInfoRow(context, Icons.palette, 'Patrón:', breed.pattern),
+                  _buildInfoRow(
+                    context,
+                    Icons.location_on,
+                    'País de Origen:',
+                    breed.country,
+                  ),
+                  _buildInfoRow(
+                    context,
+                    Icons.history,
+                    'Origen:',
+                    breed.origin,
+                  ),
+                  _buildInfoRow(
+                    context,
+                    Icons.inventory_2,
+                    'Pelaje (Coat):',
+                    breed.coat,
+                  ),
+                  _buildInfoRow(
+                    context,
+                    Icons.palette,
+                    'Patrón:',
+                    breed.pattern,
+                  ),
                   const SizedBox(height: 30),
                   Text(
                     'Dato Curioso Aleatorio',
@@ -141,7 +170,9 @@ class _DetailsView extends StatelessWidget {
                         return state.when(
                           initial: () => const SizedBox.shrink(),
                           loading: () => Center(
-                            child: CircularProgressIndicator(color: theme.colorScheme.primary),
+                            child: CircularProgressIndicator(
+                              color: theme.colorScheme.primary,
+                            ),
                           ),
                           loaded: (fact) => Text(
                             fact,
@@ -158,12 +189,17 @@ class _DetailsView extends StatelessWidget {
                             children: [
                               Text(
                                 message,
-                                style: TextStyle(color: theme.colorScheme.error, fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                  color: theme.colorScheme.error,
+                                  fontWeight: FontWeight.bold,
+                                ),
                                 textAlign: TextAlign.center,
                               ),
                               const SizedBox(height: 12),
                               TextButton.icon(
-                                onPressed: () => context.read<CatFactCubit>().fetchRandomFact(),
+                                onPressed: () => context
+                                    .read<CatFactCubit>()
+                                    .fetchRandomFact(),
                                 icon: const Icon(Icons.refresh),
                                 label: const Text('Reintentar'),
                                 style: TextButton.styleFrom(
@@ -193,7 +229,9 @@ class _DetailsView extends StatelessWidget {
     String? value,
   ) {
     final theme = Theme.of(context);
-    final displayValue = (value == null || value.isEmpty) ? 'No disponible' : value;
+    final displayValue = (value == null || value.isEmpty)
+        ? 'No disponible'
+        : value;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
